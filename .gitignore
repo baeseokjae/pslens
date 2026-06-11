@@ -1,5 +1,5 @@
 # Binaries
-pscan
+/pscan
 *.exe
 *.test
 *.out
