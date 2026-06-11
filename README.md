@@ -4,7 +4,7 @@
 
 `pslens` shows you **Physical Footprint** — the same memory metric that Activity Monitor uses — not just RSS like `ps`, `top`, or `htop`. It groups processes by application, detects "ghost" processes (sleeping with <1MB RSS), and gives you deep per-process context (CWD, open files, listening ports, active connections).
 
-> Why does Activity Monitor show Firefox using 1.2GB while `ps` says 400MB? Activity Monitor reports **Physical Footprint** (including compressed and swapped memory). `ps` only reports RSS (current RAM). `pslens` bridges this gap.
+> Why does Activity Monitor show Firefox using 1.2GB while `ps` says 400MB? Activity Monitor reports **Physical Footprint** (including compressed and swapped memory). `ps` only reports RSS (current RAM). `pslens` bridges this gap using macOS's native `libproc` API — no slow `vmmap` calls.
 
 ## Install
 
@@ -37,9 +37,9 @@ Shows a system overview: total processes, ghost count, top 10 by Physical Footpr
 
 ## Commands
 
-### `pslens` — Full system scan
+### `pslens scan` — Full system scan
 
-Default command. Shows app-level grouping, top processes, and ghost detection in one view.
+Default command. Same as `pslens` with no arguments. Shows app-level grouping, top processes, and ghost detection in one view.
 
 ```bash
 pslens           # Physical Footprint (Activity Monitor metric)
@@ -114,7 +114,7 @@ pslens kill 1234
 | **RSS** (Resident Set Size) | `ps`, `top`, `htop` | Pages currently in RAM |
 | **Physical Footprint** | Activity Monitor, pslens | RSS + compressed memory + swapped memory |
 
-macOS aggressively compresses inactive memory pages. A process may have 200MB compressed and only 50MB in RAM. Activity Monitor counts both; `ps` doesn't. `pslens` uses Apple's `vmmap --summary` to get the true Physical Footprint.
+macOS aggressively compresses inactive memory pages. A process may have 200MB compressed and only 50MB in RAM. Activity Monitor counts both; `ps` doesn't. `pslens` reads Physical Footprint directly from the kernel via `proc_pid_rusage()` — the same API that Activity Monitor uses internally.
 
 When you see something like:
 
@@ -132,7 +132,7 @@ Processes can remain in the system after their work is done — sleeping with mi
 ### Performance
 
 - **RSS mode** (`-r`): Instant — reads `/proc` equivalent via `ps`
-- **Footprint mode** (default): Uses `vmmap --summary` in parallel (up to 8 concurrent calls, 3-second timeout each)
+- **Footprint mode** (default): Reads Physical Footprint via macOS `libproc` syscall (`proc_pid_rusage()`). Same API as Activity Monitor. Completes in microseconds per process.
 - **Cache**: Footprint values are cached per run for fast `scan` and `top` commands
 
 ## FAQ
@@ -141,9 +141,9 @@ Processes can remain in the system after their work is done — sleeping with mi
 
 `btop` and `htop` report RSS, which measures only the pages currently loaded in RAM. `pslens` reports Physical Footprint, which also includes compressed and swapped memory — matching what Activity Monitor shows. The two tools complement each other: use `btop`/`htop` for real-time CPU and process monitoring, and `pslens` when you want the full memory picture.
 
-### Why does pslens call `vmmap`?
+### How does pslens read Physical Footprint?
 
-`vmmap --summary` provides the Physical Footprint value that Activity Monitor uses. Running `vmmap` directly for a single process is fine, but scanning all processes sequentially is slow (~0.5s per process). `pslens` extracts only the Footprint line from `vmmap`, runs up to 8 calls in parallel with a 3-second timeout per call, and presents the results in a readable table.
+`pslens` uses `proc_pid_rusage()` from macOS's `libproc` — the same kernel API that Activity Monitor calls internally. The response time is microseconds per process, not seconds. (If CGO is disabled or unavailable, `pslens` falls back to parsing `vmmap --summary` output.)
 
 ### Permission errors?
 

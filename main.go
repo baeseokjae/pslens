@@ -449,10 +449,13 @@ func printUsage() {
 	fmt.Printf("  %sUsage:%s\n", g, r)
 	fmt.Printf("    %spslens%s               Full scan (Footprint)\n", c, r)
 	fmt.Printf("    %spslens -r%s             Full scan (RSS)\n", c, r)
+	fmt.Printf("    %spslens scan%s           Same as default\n", c, r)
 	fmt.Printf("    %spslens top%s            Top 10 (Footprint)\n", c, r)
+	fmt.Printf("    %spslens top N%s          Top N\n", c, r)
 	fmt.Printf("    %spslens top -r%s         Top 10 (RSS)\n", c, r)
 	fmt.Printf("    %spslens ghost%s          Show ghost processes\n", c, r)
 	fmt.Printf("    %spslens app%s <name>     App details (CWD, args, connections)\n", c, r)
 	fmt.Printf("    %spslens pid%s <pid>      PID details\n", c, r)
 	fmt.Printf("    %spslens ports%s          Listening ports\n", c, r)
+	fmt.Printf("    %spslens kill%s <pid>     Show kill command without executing\n", c, r)
 }
