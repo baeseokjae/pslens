@@ -1,0 +1,19 @@
+# Binaries
+pscan
+*.exe
+*.test
+*.out
+
+# Build caches
+.goreleaser/
+dist/
+
+*.tar.gz
+
+# IDE
+.idea/
+.vscode/
+*.swp
+
+# macOS
+.DS_Store
