@@ -110,12 +110,9 @@ func cmdScan() {
 	}
 
 	sort.Slice(all, func(i, j int) bool { return all[i].RSS_KB > all[j].RSS_KB })
+
 	if sortBy != "rss" {
-		topN := 30
-		if len(all) < topN {
-			topN = len(all)
-		}
-		pscan.EnrichFootprint(all[:topN])
+		pscan.EnrichFootprint(all[:10])
 	}
 
 	label := "Physical Footprint"
@@ -179,15 +176,20 @@ func cmdTop(n int) {
 }
 
 func cmdTopN(all []pscan.Process, n int) {
+	// Sort by RSS first
 	sort.Slice(all, func(i, j int) bool { return all[i].RSS_KB > all[j].RSS_KB })
+
+	// Enrich a bit more than needed in case re-sort moves things around
+	// Enrich slightly more than n, in case re-sort moves things around
+	topN := n + 3
+	if topN > len(all) {
+		topN = len(all)
+	}
 	if sortBy != "rss" {
-		topN := n * 2
-		if len(all) < topN {
-			topN = len(all)
-		}
 		pscan.EnrichFootprint(all[:topN])
 	}
 
+	// Re-sort by the chosen metric (now that we have footprints)
 	sort.Slice(all, func(i, j int) bool { return all[i].SortKey(sortBy) > all[j].SortKey(sortBy) })
 
 	label := "Physical Footprint"
